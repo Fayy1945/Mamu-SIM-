@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pembayaran Tertunda | Mamu Coffee</title>
+
+    <style>
+        :root {
+            --cream: #f7f3ee;
+            --white: #ffffff;
+            --brown: #3e3028;
+            --brown-light: #594438;
+            --caramel: #c58b5b;
+            --caramel-dark: #a97045;
+            --muted: #89776b;
+            --border: #e9dfd5;
+            --soft: #f1e4d8;
+            --red: #b94a48;
+            --green: #47795b;
+            --shadow: 0 8px 25px rgba(62, 48, 40, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--cream);
+            color: var(--brown);
+        }
+
+        button {
+            font: inherit;
+            cursor: pointer;
+        }
+
+        /* SIDEBAR / NAVBAR DESKTOP */
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: 245px;
+            height: 100vh;
+            padding: 28px 16px;
+            background: var(--brown);
+            color: white;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            display: block;
+            width: 105px;
+            height: 105px;
+            object-fit: contain;
+            margin: 0 auto 30px;
+        }
+
+        .brand-name {
+            text-align: center;
+            font-size: 19px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: -20px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 13px;
+            margin-bottom: 9px;
+            border-radius: 12px;
+            color: #f7eee7;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: var(--caramel);
+            color: white;
+        }
+
+        .nav-icon {
+            min-width: 23px;
+            text-align: center;
+            font-size: 19px;
+        }
+
+        .pending-badge {
+            min-width: 23px;
+            padding: 4px 6px;
+            margin-left: auto;
+            border-radius: 20px;
+            background: #f3d7bd;
+            color: var(--brown);
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* KONTEN UTAMA */
+        .main {
+            margin-left: 245px;
+            padding: 32px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            letter-spacing: -0.6px;
+        }
+
+        .header p {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* RINGKASAN */
+        .summary-card {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 23px;
+            margin-bottom: 27px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: white;
+            box-shadow: var(--shadow);
+        }
+
+        .summary-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 61px;
+            height: 61px;
+            border-radius: 17px;
+            background: var(--soft);
+            font-size: 30px;
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        .summary-number {
+            font-size: 27px;
+            font-weight: bold;
+        }
+
+        /* JUDUL DAFTAR */
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .section-heading h2 {
+            font-size: 20px;
+        }
+
+        .section-heading span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        /* GRID PESANAN */
+        .pending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 20px;
+        }
+
+        .pending-card {
+            min-width: 0;
+            padding: 22px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 4px 14px rgba(62, 48, 40, 0.035);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pending-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            padding-bottom: 17px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .buyer-name {
+            font-size: 18px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .order-date {
+            margin-top: 7px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .status {
+            flex-shrink: 0;
+            padding: 7px 10px;
+            border-radius: 20px;
+            background: #fff0d9;
+            color: #946322;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .items-heading {
+            margin: 17px 0 11px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-grow: 1;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .item-name {
+            overflow-wrap: anywhere;
+        }
+
+        .item-qty {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .item-price {
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .total-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 17px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .total-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .total-price {
+            color: var(--caramel-dark);
+            font-size: 20px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        /* TATA LETAK TOMBOL AKSI BARU */
+        .card-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .btn-resume {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: var(--brown);
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-resume:hover {
+            background: var(--caramel-dark);
+        }
+
+        .card-actions-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-print,
+        .btn-delete {
+            padding: 11px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+
+        .btn-print {
+            border: none;
+            background: var(--brown-light);
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: var(--brown);
+        }
+
+        .btn-delete {
+            border: 1px solid #efd0ce;
+            background: #fff5f4;
+            color: var(--red);
+        }
+
+        .btn-delete:hover {
+            background: #f9dfdd;
+            border-color: #e6aaa6;
+        }
+
+        /* KOSONG */
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 55px 25px;
+            background: white;
+            border: 1px dashed var(--border);
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            margin-bottom: 15px;
+            font-size: 55px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 9px;
+        }
+
+        .empty-state p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 22px;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: var(--caramel);
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .empty-state a:hover {
+            background: var(--caramel-dark);
+        }
+
+        .sidebar a.cart-link {
+            display: none;
+        }
+
+        /* RESPONSIVE (NAVBAR DI ATAS UNTUK HP) */
+        @media (max-width: 800px) {
+            .sidebar {
+                inset: 0 0 auto 0;
+                width: 100%;
+                height: calc(68px + env(safe-area-inset-top, 0px));
+                padding: 6px 8px;
+                padding-top: env(safe-area-inset-top, 0px);
+                display: flex;
+                flex-direction: row;
+                align-items: stretch;
+                gap: 4px;
+                overflow: visible;
+                box-shadow: 0 4px 18px rgba(62, 48, 40, 0.18);
+            }
+
+            .logo,
+            .brand-name {
+                display: none;
+            }
+
+            .sidebar a {
+                position: relative;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 3px;
+                margin: 0;
+                padding: 6px 2px;
+                border-radius: 12px;
+                font-size: 10px;
+                line-height: 1.2;
+                text-align: center;
+            }
+
+            .nav-icon {
+                font-size: 21px;
+                min-width: 0;
+            }
+
+            .pending-badge {
+                position: absolute;
+                top: 2px;
+                left: 50%;
+                margin-left: 8px;
+                min-width: 18px;
+                padding: 2px 5px;
+                font-size: 10px;
+            }
+
+            .sidebar a.cart-link {
+                display: flex;
+                background: var(--brown-light);
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 23px 18px;
+                /* Jarak atas agar konten tidak tertutup navbar di atas */
+                padding-top: calc(68px + 28px + env(safe-area-inset-top, 0px));
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <img src="logo-removebg-preview.png" class="logo" alt="Mamu Coffee">
+        <div class="brand-name">MAMU COFFEE</div>
+
+        <a href="index.html">
+            <span class="nav-icon">☕</span>
+            <span>Menu</span>
+        </a>
+
+        <a href="pembayaran-tertunda.html" class="active">
+            <span class="nav-icon">⏳</span>
+            <span>Pembayaran Tertunda</span>
+            <span class="pending-badge" id="pendingCount">0</span>
+        </a>
+
+        <a href="riwayat.html">
+            <span class="nav-icon">📋</span>
+            <span>Riwayat</span>
+        </a>
+
+        <a href="stok.html">
+            <span class="nav-icon">📦</span>
+            <span>Stok Bahan</span>
+        </a>
+
+        <a href="index.html#pesanan" class="cart-link">
+            <span class="nav-icon">🛒</span> 
+            <span>Pesanan</span>
+            <span class="pending-badge" id="cartCount">0</span>
+        </a>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <main class="main">
+        <div class="header">
+            <div>
+                <h1>Pembayaran Tertunda ⏳</h1>
+                <p>Kelola pesanan yang belum diselesaikan pembayarannya.</p>
+            </div>
+        </div>
+
+        <!-- RINGKASAN -->
+        <div class="summary-card">
+            <div class="summary-icon">🧾</div>
+            <div>
+                <div class="summary-label">Total Pesanan Tertunda</div>
+                <div class="summary-number" id="summaryCount">0</div>
+            </div>
+        </div>
+
+        <!-- JUDUL DAFTAR -->
+        <div class="section-heading">
+            <h2>Daftar Pesanan</h2>
+            <span id="listDescription">0 pesanan</span>
+        </div>
+
+        <div class="pending-grid" id="pendingGrid"></div>
+    </main>
+
+    <script>
+        /* AMBIL DATA LOCAL STORAGE */
+        function readStorage(key, fallback) {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                return data === null ? fallback : data;
+            } catch (error) {
+                return fallback;
+            }
+        }
+
+        let pendingOrders = readStorage("mammo_pending", []);
+
+        /* FORMAT RUPIAH */
+        function formatRupiah(number) {
+            return "Rp " + Number(number || 0).toLocaleString("id-ID");
+        }
+
+        /* AMANKAN TEKS SEBELUM DITAMPILKAN */
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, function(char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#039;"
+                }[char];
+            });
+        }
+
+        /* FORMAT TANGGAL */
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+
+            if (Number.isNaN(date.getTime())) {
+                return "Tanggal tidak tersedia";
+            }
+
+            return date.toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+
+        /* HITUNG ULANG TOTAL DARI ITEM PESANAN */
+        function calculateOrderTotal(order) {
+            if (!Array.isArray(order.items)) return Number(order.total) || 0;
+
+            return order.items.reduce((sum, item) => {
+                return sum + (Number(item.price) || 0) * (Number(item.qty) || 0);
+            }, 0);
+        }
+
+        /* PERBARUI JUMLAH PESANAN */
+        function updateSummary() {
+            const count = pendingOrders.length;
+
+            document.getElementById("pendingCount").textContent = count;
+            document.getElementById("summaryCount").textContent = count;
+            document.getElementById("listDescription").textContent =
+                count + (count === 1 ? " pesanan" : " pesanan");
+        }
+
+        /* TAMPILKAN SELURUH PESANAN TERTUNDA */
+        function renderPendingOrders() {
+            const grid = document.getElementById("pendingGrid");
+
+            updateSummary();
+
+            if (pendingOrders.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">☕</div>
+                        <h3>Belum Ada Pembayaran Tertunda</h3>
+                        <p>
+                            Semua pesanan sudah selesai atau belum ada pesanan
+                            yang ditunda. Pesanan yang ditunda akan muncul di sini.
+                        </p>
+                        <a href="index.html">Kembali ke Menu</a>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = "";
+
+            pendingOrders.forEach(order => {
+                const card = document.createElement("div");
+                card.className = "pending-card";
+
+                const items = Array.isArray(order.items) ? order.items : [];
+
+                const itemsHTML = items.map(item => {
+                    const qty = Number(item.qty) || 0;
+                    const price = Number(item.price) || 0;
+
+                    return `
+                        <div class="item-row">
+                            <div class="item-name">
+                                ${escapeHTML(item.name)}
+                                <div class="item-qty">${qty} × ${formatRupiah(price)}</div>
+                            </div>
+                            <div class="item-price">
+                                ${formatRupiah(qty * price)}
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                const total = calculateOrderTotal(order);
+
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div>
+                            <div class="buyer-name">
+                                ${escapeHTML(order.buyerName || "Pembeli")}
+                            </div>
+                            <div class="order-date">
+                                Disimpan: ${escapeHTML(formatDate(order.date))}
+                            </div>
+                        </div>
+                        <span class="status">● Tertunda</span>
+                    </div>
+
+                    <div class="items-heading">Detail pesanan</div>
+
+                    <div class="item-list">
+                        ${itemsHTML || "<p>Tidak ada detail menu.</p>"}
+                    </div>
+
+                    <div class="total-section">
+                        <div class="total-label">Total pembayaran</div>
+                        <div class="total-price">${formatRupiah(total)}</div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="btn-resume">Lanjutkan Pembayaran</button>
+                        <div class="card-actions-bottom">
+                            <button class="btn-print">🖨 Cetak</button>
+                            <button class="btn-delete">🗑 Hapus</button>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelector(".btn-resume").addEventListener("click", () => {
+                    resumePayment(order.id);
+                });
+
+                card.querySelector(".btn-delete").addEventListener("click", () => {
+                    deletePendingOrder(order.id);
+                });
+
+                card.querySelector(".btn-print").addEventListener("click", () => {
+                    printPending(order.id);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        /* CETAK STRUK BELUM LUNAS */
+        function getPendingById(id) {
+            const orders = readStorage("mammo_pending", []);
+            return orders.find(item => String(item.id) === String(id));
+        }
+
+        function printPending(id) {
+            const order = getPendingById(id);
+
+            if (!order) {
+                alert("Pesanan tidak ditemukan.");
+                return;
+            }
+
+            const items = Array.isArray(order.items) ? order.items : [];
+
+            const itemsHTML = items.map(item => {
+                const qty = Number(item.qty) || 0;
+                const price = Number(item.price) || 0;
+
+                return `
+                    <div class="item">
+                        <div>${escapeHTML(item.name || "Menu")}</div>
+                        <div class="row">
+                            <span>${qty} x ${formatRupiah(price)}</span>
+                            <span>${formatRupiah(qty * price)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            const receiptCSS =
+                "@page{size:58mm auto;margin:0}" +
+                "*{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',monospace}" +
+                "body{width:58mm;padding:4mm 3mm;color:#000;font-size:11px;line-height:1.4}" +
+                ".center{text-align:center}" +
+                ".brand{font-size:15px;font-weight:bold;letter-spacing:1px}" +
+                ".line{border-top:1px dashed #000;margin:6px 0}" +
+                ".row{display:flex;justify-content:space-between;gap:6px}" +
+                ".item{margin-bottom:5px}" +
+                ".bold{font-weight:bold}" +
+                ".big{font-size:13px}" +
+                ".stamp{border:2px solid #000;padding:4px;margin:6px 0;font-size:14px;font-weight:bold;text-align:center}" +
+                ".name{overflow-wrap:anywhere}";
+
+            const receiptBody = `
+                <div class="center">
+                    <div class="brand">MAMU COFFEE</div>
+                    <div>Tagihan Pesanan</div>
+                </div>
+                <div class="line"></div>
+                <div>Tgl: ${escapeHTML(formatDate(order.date))}</div>
+                <div class="name">Pembeli: ${escapeHTML(order.buyerName || "-")}</div>
+                <div class="line"></div>
+                ${itemsHTML}
+                <div class="line"></div>
+                <div class="row bold big">
+                    <span>TOTAL</span>
+                    <span>${formatRupiah(calculateOrderTotal(order))}</span>
+                </div>
+                <div class="stamp">BELUM LUNAS</div>
+                <div class="center">Mohon selesaikan pembayaran</div>
+                <div class="center">Terima kasih</div>
+            `;
+
+            const printWindow = window.open("", "_blank", "width=380,height=600");
+
+            if (!printWindow) {
+                alert("Popup diblokir. Izinkan popup untuk halaman ini, lalu coba lagi.");
+                return;
+            }
+
+            const doc = printWindow.document;
+            doc.open();
+            doc.write("<title>Tagihan</title>");
+            doc.close();
+
+            const style = doc.createElement("style");
+            style.textContent = receiptCSS;
+            doc.head.appendChild(style);
+
+            doc.body.innerHTML = receiptBody;
+
+            setTimeout(() => {
+                printWindow.focus();
+                printWindow.print();
+            }, 400);
+        }
+
+        /* LANJUTKAN PEMBAYARAN */
+        function resumePayment(id) {
+            pendingOrders = readStorage("mammo_pending", []);
+
+            const order = pendingOrders.find(item => String(item.id) === String(id));
+
+            if (!order) {
+                alert("Pesanan tidak ditemukan. Silakan muat ulang halaman.");
+                renderPendingOrders();
+                return;
+            }
+
+            const currentCart = readStorage("mammo_cart", {});
+            const hasCurrentItems = Object.values(currentCart).some(item => {
+                return Number(item.qty) > 0;
+            });
+
+            if (hasCurrentItems) {
+                const replaceCart = confirm(
+                    "Keranjang saat ini masih berisi pesanan.\n\n" +
+                    "Ganti dengan pesanan tertunda milik " + order.buyerName + "?"
+                );
+
+                if (!replaceCart) return;
+            }
+
+            const newCart = {};
+
+            order.items.forEach(item => {
+                if (Number(item.qty) <= 0) return;
+
+                newCart[item.id] = {
+                    qty: Number(item.qty)
+                };
+            });
+
+            localStorage.setItem("mammo_cart", JSON.stringify(newCart));
+            localStorage.setItem("mammo_current_buyer", order.buyerName || "");
+            localStorage.setItem("mammo_active_pending_id", String(order.id));
+
+            window.location.href = "index.html#pesanan";
+        }
+
+        /* HAPUS PESANAN TERTUNDA */
+        function deletePendingOrder(id) {
+            const order = pendingOrders.find(item => String(item.id) === String(id));
+
+            if (!order) {
+                alert("Pesanan tidak ditemukan.");
+                renderPendingOrders();
+                return;
+            }
+
+            const confirmed = confirm("Yakin ingin menghapus pesan ini?");
+
+            if (!confirmed) return;
+
+            pendingOrders = pendingOrders.filter(item => {
+                return String(item.id) !== String(id);
+            });
+
+            localStorage.setItem("mammo_pending", JSON.stringify(pendingOrders));
+
+            const activeId = localStorage.getItem("mammo_active_pending_id");
+
+            if (String(activeId) === String(id)) {
+                localStorage.removeItem("mammo_active_pending_id");
+            }
+
+            renderPendingOrders();
+        }
+
+        /* JALANKAN SAAT HALAMAN DIBUKA */
+        renderPendingOrders();
+    </script>
+</body>
+</html>

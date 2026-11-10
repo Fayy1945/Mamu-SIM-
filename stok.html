@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Stok Bahan | Mamu Coffee</title>
+
+    <style>
+        :root {
+            --cream: #f7f3ee;
+            --brown: #3e3028;
+            --brown-light: #594438;
+            --caramel: #c58b5b;
+            --caramel-dark: #a97045;
+            --muted: #89776b;
+            --border: #e9dfd5;
+            --soft: #f1e4d8;
+            --green: #47795b;
+            --red: #b94a48;
+            --orange: #c9822b;
+            --shadow: 0 8px 25px rgba(62, 48, 40, 0.07);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+
+        body { min-height: 100vh; background: var(--cream); color: var(--brown); }
+
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed; inset: 0 auto 0 0; width: 245px; height: 100vh;
+            padding: 28px 16px; background: var(--brown); color: white;
+            z-index: 100; overflow-y: auto;
+        }
+
+        .logo { display: block; width: 105px; height: 105px; object-fit: contain; margin: 0 auto 30px; }
+
+        .brand-name {
+            text-align: center; font-size: 19px; font-weight: bold;
+            letter-spacing: 1px; margin-top: -20px; margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            position: relative; display: flex; align-items: center; gap: 10px;
+            padding: 14px 13px; margin-bottom: 9px; border-radius: 12px;
+            color: #f7eee7; text-decoration: none; font-size: 14px; transition: 0.2s;
+        }
+
+        .sidebar a:hover, .sidebar a.active { background: var(--caramel); color: white; }
+
+        .nav-icon { min-width: 23px; text-align: center; font-size: 19px; }
+
+        .pending-badge {
+            min-width: 23px; padding: 4px 6px; margin-left: auto; border-radius: 20px;
+            background: #f3d7bd; color: var(--brown); text-align: center;
+            font-size: 11px; font-weight: bold;
+        }
+
+        .sidebar a.cart-link { display: none; }
+
+        /* KONTEN */
+        .main { margin-left: 245px; padding: 32px; min-height: 100vh; }
+
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 30px; letter-spacing: -0.6px; }
+        .header p { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+        /* TAB */
+        .tabs { display: flex; gap: 10px; margin-bottom: 22px; }
+
+        .tab-btn {
+            padding: 11px 18px; border: 1px solid var(--border); border-radius: 25px;
+            background: white; color: var(--brown); font-size: 13px; font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active, .tab-btn:hover { background: var(--brown); border-color: var(--brown); color: white; }
+
+        .tab-panel { display: none; }
+        .tab-panel.show { display: block; }
+
+        /* FORM */
+        .card {
+            background: white; padding: 22px; border: 1px solid var(--border);
+            border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 22px;
+        }
+
+        .card h2 { font-size: 19px; margin-bottom: 16px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+
+        .form-group label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: bold; }
+
+        .form-group input, .form-group select, .recipe-row input, .recipe-row select {
+            width: 100%; padding: 12px; border: 1px solid var(--border);
+            border-radius: 10px; background: #fffdfb; outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus,
+        .recipe-row input:focus, .recipe-row select:focus { border-color: var(--caramel); }
+
+        .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+        .btn-primary, .btn-secondary, .btn-add {
+            padding: 12px 18px; border: none; border-radius: 10px;
+            font-size: 13px; font-weight: bold; transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--brown); color: white; }
+        .btn-primary:hover { background: var(--caramel-dark); }
+        .btn-secondary { background: #eee8e2; color: var(--brown); }
+        .btn-add { background: var(--soft); color: var(--caramel-dark); border: 1px dashed var(--caramel); }
+
+        /* DAFTAR STOK */
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+
+        .stock-card {
+            padding: 18px; background: white; border: 1px solid var(--border);
+            border-radius: 16px; min-width: 0;
+        }
+
+        .stock-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .stock-name { font-size: 16px; font-weight: bold; overflow-wrap: anywhere; }
+
+        .status-badge {
+            flex-shrink: 0; padding: 5px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: bold;
+        }
+
+        .status-ok { background: #e7f5e8; color: #2d7a35; }
+        .status-low { background: #fff0d9; color: #946322; }
+        .status-out { background: #fae1df; color: var(--red); }
+
+        .stock-qty { margin: 14px 0 4px; font-size: 26px; font-weight: bold; color: var(--caramel-dark); }
+        .stock-min { color: var(--muted); font-size: 12px; }
+
+        .stock-actions { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 16px; }
+
+        .stock-actions button {
+            padding: 10px; border-radius: 9px; border: 1px solid var(--border);
+            background: white; font-size: 13px; font-weight: bold; transition: 0.2s;
+        }
+
+        .btn-restock { background: var(--brown) !important; color: white; border-color: var(--brown) !important; }
+        .btn-restock:hover { background: var(--caramel-dark) !important; }
+        .btn-del:hover { background: #fae1df !important; border-color: #d88a84 !important; }
+
+        .empty-box {
+            grid-column: 1 / -1; padding: 40px 20px; background: white;
+            border: 1px dashed var(--border); border-radius: 16px;
+            color: var(--muted); text-align: center; line-height: 1.7; font-size: 14px;
+        }
+
+        /* RESEP */
+        .recipe-row { display: grid; grid-template-columns: 1fr 120px 40px; gap: 8px; margin-bottom: 10px; align-items: center; }
+
+        .recipe-unit { font-size: 12px; color: var(--muted); }
+
+        .btn-remove {
+            height: 42px; border: 1px solid var(--border); border-radius: 10px;
+            background: #fff5f4; color: var(--red); font-size: 18px;
+        }
+
+                /* DAFTAR RESEP TERSIMPAN */
+        .recipe-item {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .recipe-item:last-child { border-bottom: none; }
+
+        .recipe-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recipe-item-name {
+            font-size: 15px;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .recipe-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .recipe-item-actions button {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: white;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+        .recipe-item-actions button:hover { background: var(--soft); }
+
+        .recipe-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .recipe-chip {
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: var(--soft);
+            color: var(--brown);
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* HP */
+        @media (max-width: 800px) {
+            .sidebar {
+                inset: 0 0 auto 0;
+                width: 100%;
+                height: calc(68px + env(safe-area-inset-top, 0px));
+                padding: 6px 8px;
+                padding-top: calc(6px + env(safe-area-inset-top, 0px));
+                display: flex;
+                flex-direction: row;
+                align-items: stretch;
+                gap: 4px;
+                overflow: visible;
+                box-shadow: 0 4px 18px rgba(62, 48, 40, 0.18);
+            }
+            .logo, .brand-name { display: none; }
+
+            .sidebar a, .sidebar a.cart-link {
+                position: relative; flex: 1; display: flex; flex-direction: column;
+                align-items: center; justify-content: center; gap: 3px; margin: 0;
+                padding: 6px 2px; border-radius: 12px; font-size: 10px;
+                line-height: 1.2; text-align: center;
+            }
+
+            .sidebar a.cart-link { background: var(--brown-light); }
+
+            .nav-icon { font-size: 21px; min-width: 0; }
+
+            .pending-badge {
+                position: absolute; top: 2px; left: 50%; margin-left: 8px;
+                min-width: 18px; padding: 2px 5px; font-size: 10px;
+            }
+            .main {
+                margin-left: 0;
+                padding: 23px 14px 28px;
+                padding-top: calc(68px + 22px + env(safe-area-inset-top, 0px));
+            }
+            .header h1 { font-size: 25px; }
+            .stock-grid { grid-template-columns: 1fr; }
+            .recipe-row { grid-template-columns: 1fr 95px 40px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <img src="logo-removebg-preview.png" class="logo" alt="Mamu Coffee">
+        <div class="brand-name">MAMU COFFEE</div>
+
+        <a href="index.html">
+            <span class="nav-icon">☕</span>
+            <span>Menu</span>
+        </a>
+
+        <a href="pembayaran-tertunda.html">
+            <span class="nav-icon">⏳</span>
+            <span>Pembayaran Tertunda</span>
+            <span class="pending-badge" id="pendingCount">0</span>
+        </a>
+
+        <a href="riwayat.html">
+            <span class="nav-icon">📋</span>
+            <span>Riwayat</span>
+        </a>
+
+        <a href="stok.html" class="active">
+            <span class="nav-icon">📦</span>
+            <span>Stok Bahan</span>
+        </a>
+
+        <a href="index.html#pesanan" class="cart-link">
+            <span class="nav-icon">🛒</span>
+            <span>Pesanan</span>
+            <span class="pending-badge" id="cartCount">0</span>
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <div class="header">
+            <h1>Stok Bahan 📦</h1>
+            <p>Atur stok bahan dan resep tiap menu. Stok berkurang otomatis saat pembayaran berhasil.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="tabBtnStock" onclick="switchTab('stock')">📦 Stok Bahan</button>
+            <button class="tab-btn" id="tabBtnRecipe" onclick="switchTab('recipe')">🧪 Resep Menu</button>
+        </div>
+
+        <!-- TAB STOK -->
+        <section class="tab-panel show" id="tabStock">
+
+            <div class="card">
+                <h2 id="stockFormTitle">Tambah Bahan</h2>
+                <input type="hidden" id="stockId">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="stockName">Nama Bahan</label>
+                        <input type="text" id="stockName" placeholder="Contoh: Kopi">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockUnit">Satuan</label>
+                        <select id="stockUnit" onchange="toggleBoxFields()">
+                            <option value="g">g (gram)</option>
+                            <option value="ml">ml</option>
+                            <option value="pcs">pcs</option>
+                            <option value="kotak">kotak (ada isinya)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group box-field" style="display:none">
+                        <label for="stockPerBox">Isi per Kotak</label>
+                        <input type="number" id="stockPerBox" min="0" step="any" placeholder="Contoh: 120">
+                    </div>
+
+                    <div class="form-group box-field" style="display:none">
+                        <label for="stockBoxUnit">Satuan Isi</label>
+                        <select id="stockBoxUnit">
+                            <option value="ml">ml</option>
+                            <option value="g">g (gram)</option>
+                            <option value="pcs">pcs</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockQty" id="stockQtyLabel">Stok Saat Ini</label>
+                        <input type="number" id="stockQty" min="0" step="any" placeholder="Contoh: 100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockMin" id="stockMinLabel">Batas Menipis</label>
+                        <input type="number" id="stockMin" min="0" step="any" placeholder="Contoh: 20">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="saveStock()">Simpan Bahan</button>
+                    <button class="btn-secondary" onclick="resetStockForm()">Batal</button>
+                </div>
+            </div>
+
+            <div class="stock-grid" id="stockGrid"></div>
+        </section>
+
+        <!-- TAB RESEP -->
+        <section class="tab-panel" id="tabRecipe">
+            <div class="card">
+                <h2>Resep Menu</h2>
+
+                <div class="form-group" style="margin-bottom:16px">
+                    <label for="recipeMenu">Pilih Menu</label>
+                    <select id="recipeMenu" onchange="loadRecipe()"></select>
+                </div>
+
+                <div id="recipeRows"></div>
+
+                <div class="form-actions">
+                    <button class="btn-add" onclick="addRecipeRow()">＋ Tambah Bahan</button>
+                    <button class="btn-primary" onclick="saveRecipe()">Simpan Resep</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Daftar Resep Tersimpan</h2>
+                <div id="recipeList"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const STOCK_KEY = "mammo_stock";
+        const RECIPE_KEY = "mammo_recipes";
+
+        function readStorage(key, fallback) {
+            try {
+                const value = JSON.parse(localStorage.getItem(key));
+                return value === null ? fallback : value;
+            } catch (error) {
+                return fallback;
+            }
+        }
+
+        let stock = readStorage(STOCK_KEY, []);
+        let recipes = readStorage(RECIPE_KEY, {});
+        let menus = readStorage("mammo_menu", []);
+        let recipeDraft = [];
+
+        function escapeHTML(value) {
+            return String(value ?? "").replace(/[&<>"']/g, function(char) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char];
+            });
+        }
+
+        function formatNumber(number) {
+            return Number(number || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+        }
+
+        function persistStock() {
+            localStorage.setItem(STOCK_KEY, JSON.stringify(stock));
+        }
+
+        function persistRecipes() {
+            localStorage.setItem(RECIPE_KEY, JSON.stringify(recipes));
+        }
+
+        /* ========== SATUAN KOTAK ==========
+           Bahan berisi (misal susu 1 kotak = 120 ml) disimpan dalam satuan isi (ml)
+           supaya resep (ml) bisa langsung memotong stok. Di layar selalu tampil
+           dalam kotak. Bahan tanpa "perBox" tidak terpengaruh sama sekali. */
+        function isBox(item) {
+            return Number(item.perBox) > 0;
+        }
+
+        function toDisplayQty(item, base) {
+            return isBox(item) ? Number(base) / Number(item.perBox) : Number(base);
+        }
+
+        function unitLabel(item) {
+            return isBox(item) ? "kotak" : item.unit;
+        }
+
+        function toggleBoxFields() {
+            const box = document.getElementById("stockUnit").value === "kotak";
+
+            document.querySelectorAll(".box-field").forEach(el => {
+                el.style.display = box ? "block" : "none";
+            });
+
+            document.getElementById("stockQtyLabel").textContent =
+                box ? "Stok Saat Ini (kotak)" : "Stok Saat Ini";
+            document.getElementById("stockMinLabel").textContent =
+                box ? "Batas Menipis (kotak)" : "Batas Menipis";
+            document.getElementById("stockQty").placeholder =
+                box ? "Contoh: 12" : "Contoh: 100";
+            document.getElementById("stockMin").placeholder =
+                box ? "Contoh: 2" : "Contoh: 20";
+        }
+
+        /* TAB */
+        function switchTab(name) {
+            document.getElementById("tabStock").classList.toggle("show", name === "stock");
+            document.getElementById("tabRecipe").classList.toggle("show", name === "recipe");
+            document.getElementById("tabBtnStock").classList.toggle("active", name === "stock");
+            document.getElementById("tabBtnRecipe").classList.toggle("active", name === "recipe");
+
+            if (name === "recipe") {
+                renderRecipeMenuOptions();
+                loadRecipe();
+                renderRecipeList();
+            }
+        }
+
+        /* ========== STOK ========== */
+        function getStatus(item) {
+            const qty = Number(item.qty) || 0;
+            const min = Number(item.min) || 0;
+
+            if (qty <= 0) return { label: "Habis", css: "status-out" };
+            if (qty <= min) return { label: "Menipis", css: "status-low" };
+            return { label: "Aman", css: "status-ok" };
+        }
+
+        function renderStock() {
+            const grid = document.getElementById("stockGrid");
+
+            if (stock.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-box">
+                        <div style="font-size:38px;margin-bottom:8px">📦</div>
+                        Belum ada bahan.<br>
+                        Tambahkan bahan lewat form di atas, misalnya Kopi 100 g.
+                    </div>`;
+                return;
+            }
+
+            const sorted = [...stock].sort((a, b) => {
+                return a.name.localeCompare(b.name, "id", { sensitivity: "base" });
+            });
+
+            grid.innerHTML = sorted.map(item => {
+                const status = getStatus(item);
+
+                return `
+                    <div class="stock-card">
+                        <div class="stock-top">
+                            <div class="stock-name">${escapeHTML(item.name)}</div>
+                            <span class="status-badge ${status.css}">${status.label}</span>
+                        </div>
+
+                        <div class="stock-qty">${formatNumber(toDisplayQty(item, item.qty))} ${escapeHTML(unitLabel(item))}</div>
+                        <div class="stock-min">Batas menipis: ${formatNumber(toDisplayQty(item, item.min))} ${escapeHTML(unitLabel(item))}</div>
+                        ${isBox(item) ? `<div class="stock-min">Isi per kotak: ${formatNumber(item.perBox)} ${escapeHTML(item.unit)}</div>` : ""}
+
+                        <div class="stock-actions">
+                            <button class="btn-restock" onclick="addStockAmount('${item.id}')">＋ Tambah Stok</button>
+                            <button onclick="editStock('${item.id}')" aria-label="Edit">✏️</button>
+                            <button class="btn-del" onclick="deleteStock('${item.id}')" aria-label="Hapus">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function resetStockForm() {
+            document.getElementById("stockFormTitle").textContent = "Tambah Bahan";
+            document.getElementById("stockId").value = "";
+            document.getElementById("stockName").value = "";
+            document.getElementById("stockUnit").value = "g";
+            document.getElementById("stockPerBox").value = "";
+            document.getElementById("stockBoxUnit").value = "ml";
+            document.getElementById("stockQty").value = "";
+            document.getElementById("stockMin").value = "";
+            toggleBoxFields();
+        }
+
+        function saveStock() {
+            const id = document.getElementById("stockId").value;
+            const name = document.getElementById("stockName").value.trim();
+            const unitChoice = document.getElementById("stockUnit").value;
+            let qty = Number(document.getElementById("stockQty").value);
+            let min = Number(document.getElementById("stockMin").value) || 0;
+            let unit = unitChoice;
+            let perBox = 0;
+
+            if (!name || !Number.isFinite(qty) || qty < 0) {
+                alert("Nama bahan dan stok yang valid wajib diisi.");
+                return;
+            }
+
+            if (unitChoice === "kotak") {
+                perBox = Number(document.getElementById("stockPerBox").value);
+                unit = document.getElementById("stockBoxUnit").value;
+
+                if (!Number.isFinite(perBox) || perBox <= 0) {
+                    alert("Isi per kotak wajib diisi, misalnya 120 (ml).");
+                    return;
+                }
+
+                /* Simpan dalam satuan isi, tampil dalam kotak */
+                qty = Math.round(qty * perBox * 100) / 100;
+                min = Math.round(min * perBox * 100) / 100;
+            }
+
+            const duplicate = stock.find(item => {
+                return item.name.toLowerCase() === name.toLowerCase() &&
+                    String(item.id) !== String(id);
+            });
+
+            if (duplicate) {
+                alert("Nama bahan sudah tersedia.");
+                return;
+            }
+
+            if (id) {
+                const index = stock.findIndex(item => String(item.id) === String(id));
+
+                if (index !== -1) {
+                    const updated = { ...stock[index], name, unit, qty, min };
+
+                    if (perBox > 0) {
+                        updated.perBox = perBox;
+                    } else {
+                        delete updated.perBox;
+                    }
+
+                    stock[index] = updated;
+                }
+            } else {
+                const newId = stock.length
+                    ? Math.max(...stock.map(item => Number(item.id))) + 1
+                    : 1;
+
+                const entry = { id: newId, name, unit, qty, min };
+                if (perBox > 0) entry.perBox = perBox;
+
+                stock.push(entry);
+            }
+
+            persistStock();
+            resetStockForm();
+            renderStock();
+        }
+
+        function editStock(id) {
+            const item = stock.find(entry => String(entry.id) === String(id));
+            if (!item) return;
+
+            document.getElementById("stockFormTitle").textContent = "Edit Bahan";
+            document.getElementById("stockId").value = item.id;
+            document.getElementById("stockName").value = item.name;
+            if (isBox(item)) {
+                document.getElementById("stockUnit").value = "kotak";
+                document.getElementById("stockPerBox").value = item.perBox;
+                document.getElementById("stockBoxUnit").value = item.unit;
+            } else {
+                document.getElementById("stockUnit").value = item.unit;
+                document.getElementById("stockPerBox").value = "";
+            }
+
+            toggleBoxFields();
+
+            document.getElementById("stockQty").value =
+                Math.round(toDisplayQty(item, item.qty) * 100) / 100;
+            document.getElementById("stockMin").value =
+                Math.round(toDisplayQty(item, item.min) * 100) / 100;
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function addStockAmount(id) {
+            const item = stock.find(entry => String(entry.id) === String(id));
+            if (!item) return;
+
+            const input = prompt("Tambah stok " + item.name + " (" + unitLabel(item) + "):");
+            if (input === null) return;
+
+            const amount = Number(String(input).replace(",", "."));
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                alert("Jumlah harus berupa angka lebih dari 0.");
+                return;
+            }
+
+            /* Bahan berkotak: jumlah yang diketik dalam kotak, disimpan dalam satuan isi */
+            const addBase = isBox(item) ? amount * Number(item.perBox) : amount;
+
+            item.qty = Math.round((Number(item.qty) + addBase) * 100) / 100;
+            persistStock();
+            renderStock();
+        }
+
+        function deleteStock(id) {
+            const item = stock.find(entry => String(entry.id) === String(id));
+            if (!item) return;
+
+            if (!confirm('Hapus bahan "' + item.name + '"? Bahan ini juga dihapus dari semua resep.')) {
+                return;
+            }
+
+            stock = stock.filter(entry => String(entry.id) !== String(id));
+
+            Object.keys(recipes).forEach(menuId => {
+                recipes[menuId] = recipes[menuId].filter(row => String(row.stockId) !== String(id));
+                if (recipes[menuId].length === 0) delete recipes[menuId];
+            });
+
+            persistStock();
+            persistRecipes();
+            renderStock();
+            renderRecipeList();
+        }
+
+        /* ========== RESEP ========== */
+        function renderRecipeMenuOptions() {
+            const select = document.getElementById("recipeMenu");
+            const selected = select.value;
+
+            menus = readStorage("mammo_menu", []);
+
+            if (menus.length === 0) {
+                select.innerHTML = '<option value="">Buka halaman Menu dulu</option>';
+                return;
+            }
+
+            const sorted = [...menus].sort((a, b) => {
+                return a.name.localeCompare(b.name, "id", { sensitivity: "base", numeric: true });
+            });
+
+            select.innerHTML = sorted.map(menu => {
+                const hasRecipe = recipes[menu.id] && recipes[menu.id].length > 0;
+
+                return `<option value="${menu.id}">${hasRecipe ? "✓ " : ""}${escapeHTML(menu.name)}</option>`;
+            }).join("");
+
+            if (selected) select.value = selected;
+        }
+
+        function loadRecipe() {
+            const menuId = document.getElementById("recipeMenu").value;
+            const saved = recipes[menuId] || [];
+
+            recipeDraft = saved.map(row => ({ stockId: String(row.stockId), amount: row.amount }));
+            renderRecipeRows();
+        }
+
+        function renderRecipeRows() {
+            const box = document.getElementById("recipeRows");
+
+            if (stock.length === 0) {
+                box.innerHTML = `
+                    <div class="empty-box" style="margin-bottom:14px">
+                        Belum ada bahan. Tambahkan bahan dulu di tab <strong>Stok Bahan</strong>.
+                    </div>`;
+                return;
+            }
+
+            if (recipeDraft.length === 0) {
+                box.innerHTML = `
+                    <div class="empty-box" style="margin-bottom:14px">
+                        Menu ini belum punya resep. Klik <strong>＋ Tambah Bahan</strong>.
+                    </div>`;
+                return;
+            }
+
+            box.innerHTML = recipeDraft.map((row, index) => {
+                const options = stock.map(item => {
+                    const selected = String(item.id) === String(row.stockId) ? "selected" : "";
+                    return `<option value="${item.id}" ${selected}>${escapeHTML(item.name)} (${escapeHTML(item.unit)})</option>`;
+                }).join("");
+
+                return `
+                    <div class="recipe-row">
+                        <select onchange="updateDraft(${index}, 'stockId', this.value)">${options}</select>
+                        <input type="number" min="0" step="any" placeholder="Jumlah"
+                            value="${row.amount ?? ""}"
+                            oninput="updateDraft(${index}, 'amount', this.value)">
+                        <button class="btn-remove" onclick="removeRecipeRow(${index})" aria-label="Hapus bahan">×</button>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function addRecipeRow() {
+            if (stock.length === 0) {
+                alert("Tambahkan bahan dulu di tab Stok Bahan.");
+                return;
+            }
+
+            recipeDraft.push({ stockId: String(stock[0].id), amount: "" });
+            renderRecipeRows();
+        }
+
+        function updateDraft(index, field, value) {
+            if (!recipeDraft[index]) return;
+            recipeDraft[index][field] = value;
+        }
+
+        function removeRecipeRow(index) {
+            recipeDraft.splice(index, 1);
+            renderRecipeRows();
+        }
+
+        function saveRecipe() {
+            const menuId = document.getElementById("recipeMenu").value;
+
+            if (!menuId) {
+                alert("Pilih menu terlebih dahulu.");
+                return;
+            }
+
+            const rows = recipeDraft
+                .map(row => ({ stockId: row.stockId, amount: Number(row.amount) }))
+                .filter(row => row.stockId && Number.isFinite(row.amount) && row.amount > 0);
+
+            if (rows.length === 0) {
+                delete recipes[menuId];
+            } else {
+                recipes[menuId] = rows;
+            }
+
+            persistRecipes();
+            renderRecipeMenuOptions();
+            document.getElementById("recipeMenu").value = menuId;
+            loadRecipe();
+
+            renderRecipeList();
+
+            alert(rows.length === 0 ? "Resep menu ini dikosongkan." : "Resep berhasil disimpan.");
+        }
+
+                /* ========== DAFTAR RESEP TERSIMPAN ========== */
+        function renderRecipeList() {
+            const box = document.getElementById("recipeList");
+            menus = readStorage("mammo_menu", []);
+
+            const ids = Object.keys(recipes).filter(id => {
+                return Array.isArray(recipes[id]) && recipes[id].length > 0;
+            });
+
+            if (ids.length === 0) {
+                box.innerHTML = `
+                    <div class="empty-box">
+                        Belum ada resep tersimpan.<br>
+                        Pilih menu di atas, tambahkan bahan, lalu klik <strong>Simpan Resep</strong>.
+                    </div>`;
+                return;
+            }
+
+            const rows = ids.map(id => {
+                const menu = menus.find(item => String(item.id) === String(id));
+
+                return {
+                    id: id,
+                    name: menu ? menu.name : "(Menu sudah dihapus)",
+                    items: recipes[id]
+                };
+            }).sort((a, b) => {
+                return a.name.localeCompare(b.name, "id", { sensitivity: "base", numeric: true });
+            });
+
+            box.innerHTML = rows.map(row => {
+                const chips = row.items.map(entry => {
+                    const item = stock.find(s => String(s.id) === String(entry.stockId));
+                    if (!item) return "";
+
+                    return `<span class="recipe-chip">${escapeHTML(item.name)} ${formatNumber(entry.amount)} ${escapeHTML(item.unit)}</span>`;
+                }).join("");
+
+                return `
+                    <div class="recipe-item">
+                        <div class="recipe-item-top">
+                            <div class="recipe-item-name">${escapeHTML(row.name)}</div>
+                            <div class="recipe-item-actions">
+                                <button onclick="editRecipe('${row.id}')" aria-label="Edit resep">✏️</button>
+                                <button onclick="deleteRecipe('${row.id}')" aria-label="Hapus resep">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="recipe-chips">${chips || "-"}</div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function editRecipe(id) {
+            const select = document.getElementById("recipeMenu");
+            const exists = [...select.options].some(option => String(option.value) === String(id));
+
+            if (!exists) {
+                alert("Menu untuk resep ini sudah dihapus, jadi tidak bisa diedit. Hapus saja resepnya.");
+                return;
+            }
+
+            select.value = id;
+            loadRecipe();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function deleteRecipe(id) {
+            if (!confirm("Hapus resep menu ini?")) return;
+
+            delete recipes[id];
+            persistRecipes();
+
+            renderRecipeMenuOptions();
+            loadRecipe();
+            renderRecipeList();
+        }
+
+        /* BADGE NAVBAR */
+        function updateNavBadges() {
+            const pending = readStorage("mammo_pending", []);
+            const cart = readStorage("mammo_cart", {});
+
+            const cartTotal = Object.values(cart).reduce((sum, item) => {
+                return sum + (Number(item.qty) || 0);
+            }, 0);
+
+            document.getElementById("pendingCount").textContent = pending.length;
+            document.getElementById("cartCount").textContent = cartTotal;
+        }
+
+        renderStock();
+        renderRecipeList();
+        updateNavBadges();
+    </script>
+</body>
+</html>
